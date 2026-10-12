@@ -1,0 +1,19 @@
+# secrets: keys live in .env (developer) or ~/.config/traffic-watch/keys.env (setup page)
+.env
+*.env
+!.env.example
+
+.venv/
+__pycache__/
+*.pyc
+
+# generated at runtime / rebuilt on demand
+data/raw/
+data/maps/
+data/state/
+data/ref/aircraft.sqlite
+data/ref/*.tmp
+
+# release builds
+dist/
+*.zip

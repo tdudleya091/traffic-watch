@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Traffic Watch Setup</title>
+<style>
+  :root {
+    --bg: #0b0e14; --card: #141a24; --fg: #e8ecf3; --muted: #9aa5b8; --border: rgba(255,255,255,.12);
+    --accent: #3987e5; --ok: #3ecf6e; --bad: #ff6b6b;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width: 760px; margin: 0 auto; padding: 28px 16px 48px; }
+  h1 { font-size: 1.6em; margin: 0 0 4px; }
+  .lead { color: var(--muted); margin: 0 0 22px; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 18px 20px; margin-bottom: 18px; }
+  .card h2 { font-size: 1.15em; margin: 0 0 2px; }
+  .card .sub { color: var(--muted); margin: 0 0 12px; font-size: .93em; }
+  label.choice { display: flex; gap: 10px; align-items: flex-start; padding: 8px 10px; border-radius: 8px; cursor: pointer; }
+  label.choice:hover { background: rgba(255,255,255,.04); }
+  label.choice input { margin-top: 4px; }
+  label.choice b { display: block; }
+  label.choice span.hint { color: var(--muted); font-size: .9em; }
+  .fields { margin: 8px 0 4px 34px; display: grid; gap: 10px; }
+  .fields[hidden] { display: none; }
+  .fields label { display: grid; gap: 4px; font-size: .92em; color: var(--muted); }
+  input[type=text], input[type=password], select {
+    font: inherit; color: #000; background: #fff; border: 1px solid #aab3c2; border-radius: 6px; padding: 6px 8px; width: 100%;
+  }
+  select { width: auto; }
+  ol.steps { margin: 0; padding-left: 20px; color: var(--muted); font-size: .92em; }
+  ol.steps li { margin: 2px 0; }
+  a { color: #8fc2ff; }
+  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  button {
+    font: inherit; cursor: pointer; border-radius: 6px; padding: 7px 14px; border: 1px solid var(--border);
+    background: #1f2836; color: var(--fg);
+  }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+  button:disabled { opacity: .55; cursor: default; }
+  .result { font-size: .92em; }
+  .result.ok { color: var(--ok); } .result.bad { color: var(--bad); }
+  .note { color: var(--muted); font-size: .88em; }
+  code { background: rgba(255,255,255,.07); padding: 1px 5px; border-radius: 4px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Set up Traffic Watch</h1>
+  <p class="lead">Traffic Watch can use free API keys for live traffic (updates every few seconds), or run
+    without any keys: aircraft snapshots about once an hour and no ships. You can change this later with the
+    ⚙ button on the map.</p>
+
+  <section class="card" aria-labelledby="sky-h">
+    <h2 id="sky-h">Aircraft — OpenSky Network</h2>
+    <p class="sub">Free for personal use.</p>
+    <label class="choice"><input type="radio" name="sky" value="key">
+      <span><b>Use my OpenSky API client</b><span class="hint">Live aircraft, refreshed about every 40 seconds.</span></span></label>
+    <div class="fields" id="sky-fields">
+      <ol class="steps">
+        <li>Create a free account at <a href="https://opensky-network.org/" target="_blank" rel="noopener">opensky-network.org</a>.</li>
+        <li>Log in, open your <a href="https://opensky-network.org/my-opensky/account" target="_blank" rel="noopener">account page</a>
+          and create an <b>API client</b>.</li>
+        <li>Copy the <b>client ID</b> and <b>client secret</b> it shows (also in the <code>credentials.json</code> it offers) into the boxes below.</li>
+      </ol>
+      <label>Client ID <input type="text" id="sky-id" autocomplete="off" spellcheck="false"></label>
+      <label>Client secret <input type="password" id="sky-secret" autocomplete="off" spellcheck="false"
+        placeholder=""></label>
+      <div class="row"><button type="button" id="sky-test">Test</button><span class="result" id="sky-result" role="status"></span></div>
+    </div>
+    <label class="choice"><input type="radio" name="sky" value="anonymous">
+      <span><b>No key</b><span class="hint">Anonymous access: OpenSky allows 400 requests a day, so the area on screen is
+        refreshed once per interval.</span></span></label>
+    <div class="fields" id="anon-fields">
+      <label>Update every
+        <select id="interval">
+          <option value="15">15 minutes</option><option value="30">30 minutes</option>
+          <option value="60">60 minutes</option><option value="120">2 hours</option>
+        </select></label>
+    </div>
+  </section>
+
+  <section class="card" aria-labelledby="ais-h">
+    <h2 id="ais-h">Ships — AISStream.io</h2>
+    <p class="sub">Free. There is no keyless source of live ship positions, so ships need this key.</p>
+    <label class="choice"><input type="radio" name="ais" value="key">
+      <span><b>Use my AISStream key</b><span class="hint">Live ships around the port you are viewing.</span></span></label>
+    <div class="fields" id="ais-fields">
+      <ol class="steps">
+        <li>Go to <a href="https://aisstream.io/" target="_blank" rel="noopener">aisstream.io</a> and sign in with GitHub.</li>
+        <li>Open <a href="https://aisstream.io/apikeys" target="_blank" rel="noopener">API Keys</a> and create a key.</li>
+        <li>Paste the key below.</li>
+      </ol>
+      <label>API key <input type="password" id="ais-key" autocomplete="off" spellcheck="false"></label>
+      <div class="row"><button type="button" id="ais-test">Test</button><span class="result" id="ais-result" role="status"></span></div>
+    </div>
+    <label class="choice"><input type="radio" name="ais" value="off">
+      <span><b>Skip</b><span class="hint">The map shows aircraft and weather only.</span></span></label>
+  </section>
+
+  <div class="row">
+    <button type="button" class="primary" id="save">Save and open the map</button>
+    <span class="result" id="save-result" role="status"></span>
+  </div>
+  <p class="note" id="where"></p>
+</main>
+<script>
+(function () {
+  "use strict";
+  const $ = (id) => document.getElementById(id);
+  const radio = (name) => document.querySelector(`input[name=${name}]:checked`)?.value;
+  let state = {};
+
+  function sync() {
+    $("sky-fields").hidden = radio("sky") !== "key";
+    $("anon-fields").hidden = radio("sky") !== "anonymous";
+    $("ais-fields").hidden = radio("ais") !== "key";
+  }
+  document.querySelectorAll("input[type=radio]").forEach((r) => r.addEventListener("change", sync));
+
+  function show(el, ok, msg) {
+    el.textContent = msg;
+    el.className = "result " + (ok ? "ok" : "bad");
+  }
+
+  async function post(url, body) {
+    const r = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    return r.json();
+  }
+
+  async function test(service, btn, out) {
+    btn.disabled = true;
+    out.className = "result";
+    out.textContent = "Testing…";
+    try {
+      const d = await post("/api/setup/test", { service, opensky_id: $("sky-id").value,
+        opensky_secret: $("sky-secret").value, ais_key: $("ais-key").value });
+      show(out, d.ok, d.message);
+    } catch (e) {
+      show(out, false, "Test failed: " + e.message);
+    } finally {
+      btn.disabled = false;
+    }
+  }
+  $("sky-test").onclick = () => test("opensky", $("sky-test"), $("sky-result"));
+  $("ais-test").onclick = () => test("ais", $("ais-test"), $("ais-result"));
+
+  $("save").onclick = async () => {
+    const out = $("save-result");
+    $("save").disabled = true;
+    out.className = "result";
+    out.textContent = "Saving…";
+    try {
+      const d = await post("/api/setup/save", {
+        opensky_mode: radio("sky"), opensky_id: $("sky-id").value, opensky_secret: $("sky-secret").value,
+        ais_mode: radio("ais"), ais_key: $("ais-key").value, interval_min: parseInt($("interval").value, 10) });
+      show(out, d.ok, d.message);
+      if (d.ok) setTimeout(() => { window.location.href = "/"; }, 700);
+    } catch (e) {
+      show(out, false, "Could not save: " + e.message);
+    } finally {
+      $("save").disabled = false;
+    }
+  };
+
+  fetch("/api/setup/state").then((r) => r.json()).then((s) => {
+    state = s;
+    const first = !s.configured;
+    document.querySelector(`input[name=sky][value=${first ? "anonymous" : s.opensky_mode}]`).checked = true;
+    document.querySelector(`input[name=ais][value=${first ? "off" : s.ais_mode}]`).checked = true;
+    $("sky-id").value = s.opensky_id || "";
+    if (s.opensky_secret_saved) $("sky-secret").placeholder = "saved — leave blank to keep";
+    if (s.ais_key_saved) $("ais-key").placeholder = "saved — leave blank to keep";
+    $("interval").value = String(s.interval_min || 60);
+    $("where").textContent = `Keys are stored only on this computer, in ${s.keys_file} (readable by your user only).`;
+    sync();
+  });
+})();
+</script>
+</body>
+</html>

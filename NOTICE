@@ -1,0 +1,43 @@
+Traffic Watch — third-party data and services
+=============================================
+
+The Traffic Watch code is MIT-licensed (see LICENSE). It displays data from the
+services and datasets below, each under its own terms. Data marked "bundled"
+ships in data/ref/; everything else is fetched at runtime on your machine.
+
+Bundled reference data (data/ref/)
+----------------------------------
+- roads.json — highways from Natural Earth (public domain,
+  https://www.naturalearthdata.com) and, for Alaska, Hawaii and Japan,
+  OpenStreetMap. Map data © OpenStreetMap contributors, available under the
+  Open Database License (ODbL) 1.0: https://www.openstreetmap.org/copyright
+- places.json, ports.json — Natural Earth (public domain).
+- airports.json — OurAirports (public domain, https://ourairports.com/data/).
+- airlines.json — derived from OpenFlights airlines.dat, Open Database License
+  (ODbL) 1.0, https://openflights.org/data.html, with additions.
+- mid.json — derived from powers9/MIDs, Apache License 2.0,
+  https://github.com/powers9/MIDs
+- types.json — ICAO Doc 8643 aircraft type designators, as published by the
+  OpenSky Network (https://opensky-network.org).
+
+Downloaded on first run (not redistributed)
+-------------------------------------------
+- aircraft.sqlite — built from tar1090-db (https://github.com/wiedehopf/tar1090-db).
+
+Live services (your own access, under each service's terms)
+-----------------------------------------------------------
+- OpenSky Network — aircraft positions. Matthias Schäfer, Martin Strohmeier,
+  Vincent Lenders, Ivan Martinovic and Matthias Wilhelm. "Bringing Up OpenSky:
+  A Large-scale ADS-B Sensor Network for Research". IPSN 2014.
+  Terms: https://opensky-network.org/about/terms-of-use (non-commercial use).
+- AISStream.io — ship positions (https://aisstream.io).
+- aviationweather.gov (NOAA/NWS Aviation Weather Center) — METAR, TAF, PIREP.
+- api.weather.gov (US National Weather Service) — US daily forecasts.
+- Open-Meteo (https://open-meteo.com) — forecasts outside the US, CC BY 4.0.
+- RainViewer (https://www.rainviewer.com) — radar outside the mainland US.
+- Iowa Environmental Mesonet — NEXRAD radar tiles (mainland US).
+- Esri — gray canvas base map tiles (Esri, HERE, Garmin, © OpenStreetMap contributors).
+- Chart.js (MIT), Leaflet (BSD-2-Clause) and folium (MIT) power the map and charts.
+
+Ship operators shown in the app are inferred from ship names and may be wrong.
+Aircraft owners are hidden for aircraft in the FAA LADD/PIA privacy programmes.

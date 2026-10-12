@@ -1,0 +1,148 @@
+:root {
+  --tw-bg: rgba(14, 18, 26, 0.86);
+  --tw-fg: #e8ecf3;
+  --tw-muted: #9aa5b8;
+  --tw-border: rgba(255, 255, 255, 0.12);
+  --tw-accent: #7aa2ff;
+  --tw-scale: 1;
+}
+html, body { background: #0b0e14; }
+
+#tw-portbar, #tw-panel, #tw-status, #tw-legend {
+  z-index: 1000; color: var(--tw-fg); background: var(--tw-bg);
+  border: 1px solid var(--tw-border); border-radius: 8px; backdrop-filter: blur(4px);
+  font: calc(13px * var(--tw-scale)) / 1.35 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+#tw-portbar, #tw-panel { position: absolute; }
+#tw-portbar { top: 10px; left: 54px; padding: 6px 10px; display: flex; gap: 10px; align-items: center; }
+.tw-title { font-weight: 650; letter-spacing: 0.02em; cursor: default; }
+/* Black on white so the (native, usually white) drop-down list stays readable on any GTK theme. */
+#tw-port {
+  font: inherit; color: #000; background: #fff; border: 1px solid #aab3c2;
+  border-radius: 6px; padding: 3px 6px; color-scheme: light;
+}
+#tw-port option { color: #000; background: #fff; font-weight: 400; }
+#tw-port optgroup { color: #333; background: #fff; font-weight: 700; font-style: normal; }
+#tw-panel { top: 10px; right: 10px; padding: 10px 12px; min-width: 18em; max-width: 24em; }
+#tw-clock { font-variant-numeric: tabular-nums; font-size: 1.55em; font-weight: 650; text-align: right; }
+#tw-utc { color: var(--tw-muted); font-size: 0.72em; font-weight: 500; }
+#tw-sub { text-align: right; font-size: 0.85em; margin-bottom: 8px; }
+.tw-muted { color: var(--tw-muted); }
+.tw-wx-block { border-top: 1px solid var(--tw-border); padding-top: 6px; margin-top: 6px; }
+.tw-wx-h { font-size: 0.8em; text-transform: uppercase; letter-spacing: 0.06em; color: var(--tw-muted); }
+.tw-wx-grid { display: grid; grid-template-columns: auto 1fr; gap: 1px 10px; }
+.tw-wx-grid dt { color: var(--tw-muted); }
+.tw-wx-grid dd { margin: 0; }
+.tw-cat { display: inline-block; padding: 0 5px; border-radius: 4px; font-size: 0.8em; font-weight: 700; color: #000; }
+.tw-cat-VFR { background: #3ecf6e; } .tw-cat-MVFR { background: #5aa7ff; }
+.tw-cat-IFR { background: #ff5b5b; } .tw-cat-LIFR { background: #e15bff; }
+#tw-counts { border-top: 1px solid var(--tw-border); margin-top: 6px; padding-top: 6px; display: flex; gap: 14px; }
+/* bottom-left stack: legend, then status line; Leaflet's scale bar sits below */
+#tw-bl {
+  position: absolute; z-index: 1000; left: 10px; bottom: 48px; display: flex; flex-direction: column;
+  align-items: flex-start; gap: 6px; max-width: min(62vw, 560px); pointer-events: none;
+}
+#tw-bl > * { pointer-events: auto; }
+#tw-status { padding: 4px 8px; font-size: calc(11px * var(--tw-scale)); }
+#tw-legend { padding: 6px 10px; font-size: calc(11.5px * var(--tw-scale)); }
+.tw-lg-head {
+  all: unset; cursor: pointer; font-weight: 650; display: flex; gap: 6px; align-items: center;
+  font-size: calc(12px * var(--tw-scale));
+}
+.tw-lg-body { display: grid; grid-template-columns: repeat(2, minmax(0, auto)); gap: 6px 22px; margin-top: 6px; }
+#tw-legend.tw-collapsed .tw-lg-body { display: none; }
+.tw-lg-sec h4 {
+  margin: 0 0 3px; font-size: 0.82em; text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--tw-muted); font-weight: 600;
+}
+.tw-lg-row { display: flex; align-items: center; gap: 6px; white-space: nowrap; line-height: 1.5; }
+.tw-lg-sym { min-width: 18px; height: 16px; display: inline-flex; align-items: center; justify-content: center; flex: none; }
+.tw-lg-sym svg { width: 16px; height: 16px; filter: drop-shadow(0 0 1px #000); }
+.tw-lg-sym .tw-shield, .tw-lg-sym .tw-label { transform: none; }
+.tw-lg-swatches { display: inline-flex; gap: 2px; }
+.tw-lg-sw { width: 10px; height: 10px; border-radius: 2px; display: inline-block; border: 1px solid rgba(0,0,0,.5); }
+.tw-lg-line { width: 18px; height: 0; border-top: 2.5px solid #e0a33a; }
+.tw-lg-box { width: 14px; height: 10px; border: 1.5px dashed #7aa2ff; }
+.tw-lg-dot { width: 10px; height: 10px; border-radius: 50%; border: 1px solid #000; display: inline-block; }
+
+/* dashboard (above the legend) */
+#tw-dash {
+  z-index: 1000; color: var(--tw-fg); background: #141a24; border: 1px solid var(--tw-border); border-radius: 8px;
+  padding: 6px 10px; width: min(62vw, 440px); font: calc(12px * var(--tw-scale)) / 1.35 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+.tw-dash-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.tw-dash-toggle { all: unset; cursor: pointer; font-weight: 650; display: flex; gap: 6px; align-items: center; margin-right: auto; }
+.tw-seg { display: inline-flex; border: 1px solid var(--tw-border); border-radius: 6px; overflow: hidden; }
+.tw-seg button {
+  all: unset; cursor: pointer; padding: 1px 8px; color: var(--tw-muted); font-size: 0.92em;
+}
+.tw-seg button + button { border-left: 1px solid var(--tw-border); }
+.tw-seg button[aria-selected="true"], .tw-seg button.on { background: #24324a; color: #fff; }
+.tw-dash-body { max-height: 45vh; overflow-y: auto; margin-top: 6px; display: grid; gap: 8px; }
+#tw-dash.tw-collapsed .tw-dash-body { display: none; }
+.tw-chart { margin: 0; }
+.tw-chart figcaption { font-weight: 600; font-size: 0.92em; margin-bottom: 2px; }
+.tw-chart-box { position: relative; height: calc(118px * var(--tw-scale)); }
+.tw-chart-box.tw-tall { height: calc(190px * var(--tw-scale)); }
+.tw-chart-box[data-empty="1"] { height: auto; }
+.tw-chart-box[data-empty="1"] canvas { display: none; }
+.tw-chart-box[data-empty="1"]::after {
+  content: attr(data-msg);
+  display: block; color: var(--tw-muted); font-size: 0.9em; padding: 4px 0 6px;
+}
+.tw-dash-empty { color: var(--tw-muted); padding: 8px 2px; }
+.tw-btn {
+  display: inline-block; margin-top: 6px; padding: 3px 10px; border-radius: 6px; background: #3987e5; color: #fff !important;
+  text-decoration: none; font-weight: 600;
+}
+#tw-mode { font-size: 0.85em; text-align: right; color: #ffd28a; margin: -4px 0 6px; }
+#tw-mode[hidden] { display: none; }
+#tw-gear { color: inherit; text-decoration: none; font-size: 1.1em; padding: 0 4px; opacity: 0.85; }
+#tw-gear:hover { opacity: 1; }
+
+/* detail popups */
+.leaflet-popup.tw-pop .leaflet-popup-content-wrapper,
+.leaflet-popup.tw-pop .leaflet-popup-tip { background: #141a24; color: var(--tw-fg); }
+.leaflet-popup.tw-pop .leaflet-popup-content { margin: 10px 12px; font: 12.5px/1.45 system-ui, sans-serif; min-width: 230px; }
+.tw-pop h3 { margin: 0 0 2px; font-size: 1.15em; }
+.tw-pop .tw-pop-sub { color: var(--tw-muted); margin-bottom: 6px; }
+.tw-pop dl { display: grid; grid-template-columns: auto 1fr; gap: 1px 10px; margin: 0; }
+.tw-pop dt { color: var(--tw-muted); }
+.tw-pop dd { margin: 0; }
+.tw-pop .tw-links { margin-top: 8px; display: flex; gap: 12px; flex-wrap: wrap; }
+.tw-pop a { color: #8fc2ff; }
+.tw-badge { display: inline-block; padding: 0 5px; border-radius: 4px; font-size: 0.8em; font-weight: 700; background: #c8c8c8; color: #000; }
+.tw-inferred { color: var(--tw-muted); font-style: italic; }
+.tw-warn { color: #ffb84d; }
+
+/* static labels */
+.tw-label-wrap { background: none; border: none; }
+.tw-label, .tw-apt, .tw-port {
+  white-space: nowrap; pointer-events: none; color: #f2f4f8;
+  text-shadow: 0 0 3px #000, 0 0 2px #000, 0 0 1px #000;
+  font: 600 calc(11px * var(--tw-scale)) system-ui, sans-serif;
+}
+.tw-apt, .tw-port { pointer-events: auto; }
+.tw-city { transform: translate(5px, -7px); }
+.tw-city-1 { font-size: calc(14px * var(--tw-scale)); font-weight: 700; }
+.tw-city-2 { font-size: calc(11.5px * var(--tw-scale)); font-weight: 600; color: #d6dbe4; }
+.tw-shield {
+  transform: translate(-50%, -50%); padding: 0 4px; border-radius: 3px; text-shadow: none;
+  font-size: calc(10px * var(--tw-scale)); font-weight: 700;
+}
+.tw-shield-i { background: #1d4fa8; border: 1px solid #fff; color: #fff; }
+.tw-shield-us { background: #f4f4f4; border: 1px solid #222; color: #111; }
+.tw-shield-e { background: #127a3a; border: 1px solid #fff; color: #fff; }
+.tw-apt { color: #9fd0ff; }
+.tw-apt-major { font-size: calc(12.5px * var(--tw-scale)); color: #c9e5ff; }
+.tw-apt-dot, .tw-port-dot { margin-right: 3px; }
+.tw-port { color: #8ff0d2; }
+.tw-port-major { font-size: calc(12.5px * var(--tw-scale)); color: #b6ffe9; }
+
+/* live markers */
+.tw-mk { background: none; border: none; }
+.tw-rot { width: 100%; height: 100%; transform-origin: 50% 50%; }
+.tw-rot svg { width: 100%; height: 100%; display: block; filter: drop-shadow(0 0 1.5px #000); }
+.leaflet-tooltip.tw-tip { font: 12px/1.35 system-ui, sans-serif; }
+.tw-tip b { font-size: 1.05em; }
+.leaflet-control-layers { font: calc(12px * var(--tw-scale)) system-ui, sans-serif; }

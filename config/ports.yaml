@@ -1,0 +1,668 @@
+# Each port gets a 200 x 200 mile view centred on (lat, lon).
+#
+# `group` = which OpenSky query box the port shares. Ports in one group are
+# fetched with a single bounding-box call, so keep the union of each group's
+# boxes under 25 sq deg (1 credit per call). The app prints a warning at
+# startup if a group costs more than that.
+#
+# `station` = ICAO airport used for the current-conditions / TAF panel
+#             (`taf_station` overrides the TAF source when `station` has none).
+# `harbors` = extra port labels drawn on the map, beyond Natural Earth's list.
+#
+# To add a port later: append an entry, pick or create a group, restart.
+
+defaults:
+  half_side_miles: 100
+
+# Dropdown sections, in display order: region -> OpenSky groups.
+regions:
+  West Coast: [SoCal, Bay Area, Pacific Northwest]
+  Alaska and Hawaii: [Alaska, Hawaii]
+  Gulf Coast: [Central Gulf, Houston, Corpus Christi, Tampa Bay]
+  Southeast Atlantic: [Florida Atlantic, Jacksonville-Savannah, Carolinas]
+  Northeast and Mid-Atlantic: [Hampton Roads, Chesapeake, New York, New England]
+  Great Lakes: [Lake Michigan, Detroit]
+  Japan: [Kanto, Setouchi, Kyushu, Tohoku-Hokkaido, Wakkanai, Okinawa]
+
+ports:
+  - id: LA
+    name: Los Angeles
+    lat: 33.736
+    lon: -118.265
+    tz: America/Los_Angeles
+    station: KLAX
+    group: SoCal
+    harbors:
+      - {name: Port of Los Angeles, lat: 33.736, lon: -118.265}
+      - {name: Port of Long Beach, lat: 33.754, lon: -118.216}
+      - {name: Port Hueneme, lat: 34.149, lon: -119.208}
+
+  - id: SD
+    name: San Diego
+    lat: 32.700
+    lon: -117.170
+    tz: America/Los_Angeles
+    station: KSAN
+    group: SoCal
+    harbors:
+      - {name: Port of San Diego, lat: 32.700, lon: -117.170}
+      - {name: Naval Base San Diego, lat: 32.676, lon: -117.123}
+      - {name: Ensenada, lat: 31.856, lon: -116.627}
+
+  - id: SF
+    name: San Francisco
+    lat: 37.795
+    lon: -122.390
+    tz: America/Los_Angeles
+    station: KSFO
+    group: Bay Area
+    harbors:
+      - {name: Port of San Francisco, lat: 37.795, lon: -122.390}
+      - {name: Port of Richmond, lat: 37.912, lon: -122.360}
+
+  - id: OAK
+    name: Oakland
+    lat: 37.800
+    lon: -122.300
+    tz: America/Los_Angeles
+    station: KOAK
+    group: Bay Area
+    harbors:
+      - {name: Port of Oakland, lat: 37.800, lon: -122.300}
+
+  - id: ALAMEDA
+    name: Alameda
+    lat: 37.772
+    lon: -122.290
+    tz: America/Los_Angeles
+    station: KOAK
+    group: Bay Area
+    harbors:
+      - {name: Alameda Point, lat: 37.780, lon: -122.315}
+
+  - id: SAC
+    name: Sacramento
+    lat: 38.565
+    lon: -121.545
+    tz: America/Los_Angeles
+    station: KSAC
+    group: Bay Area
+    harbors:
+      - {name: Port of West Sacramento, lat: 38.565, lon: -121.545}
+      - {name: Port of Stockton, lat: 37.948, lon: -121.322}
+
+  - id: SEA
+    name: Seattle
+    lat: 47.585
+    lon: -122.350
+    tz: America/Los_Angeles
+    station: KSEA
+    group: Pacific Northwest
+    harbors:
+      - {name: Port of Seattle, lat: 47.585, lon: -122.350}
+      - {name: Port of Tacoma, lat: 47.268, lon: -122.410}
+      - {name: Port of Everett, lat: 47.990, lon: -122.225}
+
+  - id: PDX
+    name: Portland
+    lat: 45.610
+    lon: -122.740
+    tz: America/Los_Angeles
+    station: KPDX
+    group: Pacific Northwest
+    harbors:
+      - {name: Port of Portland, lat: 45.610, lon: -122.740}
+      - {name: Port of Vancouver USA, lat: 45.630, lon: -122.700}
+      - {name: Port of Astoria, lat: 46.190, lon: -123.830}
+
+  - id: ANC
+    name: Anchorage
+    lat: 61.240
+    lon: -149.890
+    tz: America/Anchorage
+    station: PANC
+    group: Alaska
+    harbors:
+      - {name: Port of Alaska, lat: 61.240, lon: -149.890}
+      - {name: Port MacKenzie, lat: 61.267, lon: -149.917}
+
+  - id: HNL
+    name: Honolulu
+    lat: 21.310
+    lon: -157.870
+    tz: Pacific/Honolulu
+    station: PHNL
+    group: Hawaii
+    harbors:
+      - {name: Honolulu Harbor, lat: 21.310, lon: -157.870}
+      - {name: Pearl Harbor, lat: 21.350, lon: -157.970}
+      - {name: Kalaeloa Barbers Point Harbor, lat: 21.296, lon: -158.110}
+      - {name: Kahului Harbor, lat: 20.895, lon: -156.475}
+      - {name: Nawiliwili Harbor, lat: 21.955, lon: -159.355}
+
+  # ---------------- Great Lakes ----------------
+  - id: CHI
+    name: Chicago
+    lat: 41.800
+    lon: -87.600
+    tz: America/Chicago
+    station: KMDW
+    group: Lake Michigan
+    harbors:
+      - {name: Port of Chicago (Iroquois Landing), lat: 41.711, lon: -87.545}
+      - {name: Navy Pier, lat: 41.892, lon: -87.604}
+      - {name: Port of Indiana-Burns Harbor, lat: 41.640, lon: -87.150}
+
+  - id: MKE
+    name: Milwaukee
+    lat: 43.012
+    lon: -87.896
+    tz: America/Chicago
+    station: KMKE
+    group: Lake Michigan
+    harbors:
+      - {name: Port Milwaukee, lat: 43.012, lon: -87.896}
+      - {name: Port of Sheboygan, lat: 43.749, lon: -87.703}
+
+  - id: DET
+    name: Detroit
+    lat: 42.318
+    lon: -83.060
+    tz: America/Detroit
+    station: KDTW
+    group: Detroit
+    harbors:
+      - {name: Port of Detroit, lat: 42.318, lon: -83.060}
+      - {name: Port of Monroe, lat: 41.890, lon: -83.360}
+      - {name: Port of Toledo, lat: 41.690, lon: -83.500}
+
+  # ---------------- Northeast & Mid-Atlantic ----------------
+  - id: ORF
+    name: Norfolk, VA
+    lat: 36.915
+    lon: -76.320
+    tz: America/New_York
+    station: KORF
+    group: Hampton Roads
+    harbors:
+      - {name: Norfolk International Terminals, lat: 36.915, lon: -76.320}
+      - {name: Naval Station Norfolk, lat: 36.946, lon: -76.310}
+
+  - id: HR
+    name: Hampton Roads, VA
+    lat: 36.980
+    lon: -76.350
+    tz: America/New_York
+    station: KPHF
+    group: Hampton Roads
+    harbors:
+      - {name: Newport News Marine Terminal, lat: 36.968, lon: -76.430}
+
+  - id: PTS
+    name: Portsmouth, VA
+    lat: 36.840
+    lon: -76.300
+    tz: America/New_York
+    station: KORF
+    group: Hampton Roads
+    harbors:
+      - {name: Virginia International Gateway, lat: 36.880, lon: -76.360}
+      - {name: Norfolk Naval Shipyard, lat: 36.820, lon: -76.295}
+
+  - id: BAL
+    name: Baltimore, MD
+    lat: 39.255
+    lon: -76.555
+    tz: America/New_York
+    station: KBWI
+    group: Chesapeake
+    harbors:
+      - {name: Port of Baltimore (Seagirt), lat: 39.255, lon: -76.555}
+      - {name: Sparrows Point, lat: 39.215, lon: -76.480}
+
+  - id: ILG
+    name: Wilmington, DE
+    lat: 39.717
+    lon: -75.523
+    tz: America/New_York
+    station: KILG
+    group: Chesapeake
+    harbors:
+      - {name: Port of Wilmington, lat: 39.717, lon: -75.523}
+      - {name: Port of Philadelphia, lat: 39.910, lon: -75.140}
+
+  - id: NYC
+    name: New York City
+    lat: 40.682
+    lon: -74.012
+    tz: America/New_York
+    station: KJFK
+    group: New York
+    harbors:
+      - {name: Red Hook Container Terminal, lat: 40.682, lon: -74.012}
+      - {name: Manhattan Cruise Terminal, lat: 40.769, lon: -73.997}
+
+  - id: LI
+    name: Long Island, NY
+    lat: 40.947
+    lon: -73.070
+    tz: America/New_York
+    station: KISP
+    group: New York
+    harbors:
+      - {name: Port Jefferson, lat: 40.947, lon: -73.070}
+      - {name: Montauk Harbor, lat: 41.073, lon: -71.940}
+
+  - id: EWR
+    name: Port Newark
+    lat: 40.685
+    lon: -74.155
+    tz: America/New_York
+    station: KEWR
+    group: New York
+    harbors:
+      - {name: Port Newark-Elizabeth Marine Terminal, lat: 40.685, lon: -74.155}
+
+  - id: PJ
+    name: Port Jersey
+    lat: 40.672
+    lon: -74.080
+    tz: America/New_York
+    station: KEWR
+    group: New York
+    harbors:
+      - {name: Port Jersey (GCT Bayonne), lat: 40.672, lon: -74.080}
+
+  - id: BDR
+    name: Bridgeport, CT
+    lat: 41.170
+    lon: -73.180
+    tz: America/New_York
+    station: KBDR
+    group: New York
+    harbors:
+      - {name: Port of Bridgeport, lat: 41.170, lon: -73.180}
+
+  - id: HVN
+    name: New Haven, CT
+    lat: 41.290
+    lon: -72.910
+    tz: America/New_York
+    station: KHVN
+    group: New York
+    harbors:
+      - {name: Port of New Haven, lat: 41.290, lon: -72.910}
+
+  - id: NLON
+    name: New London, CT
+    lat: 41.353
+    lon: -72.093
+    tz: America/New_York
+    station: KGON
+    group: New York
+    harbors:
+      - {name: State Pier New London, lat: 41.353, lon: -72.093}
+      - {name: Naval Submarine Base New London, lat: 41.395, lon: -72.090}
+
+  - id: PVD
+    name: Providence, RI
+    lat: 41.795
+    lon: -71.395
+    tz: America/New_York
+    station: KPVD
+    group: New England
+    harbors:
+      - {name: Port of Providence, lat: 41.795, lon: -71.395}
+      - {name: Quonset Point, lat: 41.590, lon: -71.410}
+      - {name: Fall River, lat: 41.700, lon: -71.165}
+
+  - id: BOS
+    name: Boston, MA
+    lat: 42.345
+    lon: -71.030
+    tz: America/New_York
+    station: KBOS
+    group: New England
+    harbors:
+      - {name: Port of Boston (Conley Terminal), lat: 42.345, lon: -71.030}
+      - {name: Portsmouth Harbor NH, lat: 43.080, lon: -70.760}
+
+  # ---------------- Gulf Coast ----------------
+  - id: NOLA
+    name: New Orleans, LA
+    lat: 29.935
+    lon: -90.060
+    tz: America/Chicago
+    station: KMSY
+    group: Central Gulf
+    harbors:
+      - {name: Port of New Orleans, lat: 29.935, lon: -90.060}
+      - {name: Port of South Louisiana, lat: 30.050, lon: -90.480}
+      - {name: Port Fourchon, lat: 29.110, lon: -90.200}
+
+  - id: BR
+    name: Baton Rouge, LA
+    lat: 30.440
+    lon: -91.205
+    tz: America/Chicago
+    station: KBTR
+    group: Central Gulf
+    harbors:
+      - {name: Port of Greater Baton Rouge, lat: 30.440, lon: -91.205}
+
+  - id: MOB
+    name: Mobile, AL
+    lat: 30.690
+    lon: -88.040
+    tz: America/Chicago
+    station: KMOB
+    group: Central Gulf
+    harbors:
+      - {name: Port of Mobile, lat: 30.690, lon: -88.040}
+      - {name: Port of Pascagoula, lat: 30.350, lon: -88.560}
+      - {name: Port of Gulfport, lat: 30.360, lon: -89.090}
+      - {name: Port of Pensacola, lat: 30.400, lon: -87.210}
+
+  - id: HOU
+    name: Houston, TX
+    lat: 29.700
+    lon: -95.100
+    tz: America/Chicago
+    station: KHOU
+    group: Houston
+    harbors:
+      - {name: Port Houston Turning Basin, lat: 29.730, lon: -95.270}
+      - {name: Barbours Cut Terminal, lat: 29.680, lon: -95.000}
+      - {name: Bayport Terminal, lat: 29.610, lon: -95.020}
+      - {name: Port of Galveston, lat: 29.310, lon: -94.790}
+      - {name: Texas City, lat: 29.370, lon: -94.890}
+      - {name: Port Freeport, lat: 28.940, lon: -95.310}
+
+  - id: CRP
+    name: Corpus Christi, TX
+    lat: 27.812
+    lon: -97.400
+    tz: America/Chicago
+    station: KCRP
+    group: Corpus Christi
+    harbors:
+      - {name: Port of Corpus Christi, lat: 27.812, lon: -97.400}
+      - {name: Ingleside, lat: 27.820, lon: -97.210}
+
+  - id: TPA
+    name: Tampa Bay, FL
+    lat: 27.940
+    lon: -82.440
+    tz: America/New_York
+    station: KTPA
+    group: Tampa Bay
+    harbors:
+      - {name: Port Tampa Bay, lat: 27.940, lon: -82.440}
+      - {name: Port Manatee, lat: 27.640, lon: -82.560}
+      - {name: Port of St. Petersburg, lat: 27.770, lon: -82.630}
+
+  # ---------------- Southeast Atlantic ----------------
+  - id: CC
+    name: Cape Canaveral, FL
+    lat: 28.410
+    lon: -80.620
+    tz: America/New_York
+    station: KCOF
+    group: Florida Atlantic
+    harbors:
+      - {name: Port Canaveral, lat: 28.410, lon: -80.620}
+
+  - id: FLL
+    name: Fort Lauderdale, FL
+    lat: 26.090
+    lon: -80.120
+    tz: America/New_York
+    station: KFLL
+    group: Florida Atlantic
+    harbors:
+      - {name: Port Everglades, lat: 26.090, lon: -80.120}
+      - {name: PortMiami, lat: 25.775, lon: -80.170}
+      - {name: Port of Palm Beach, lat: 26.770, lon: -80.050}
+
+  - id: JAX
+    name: Jacksonville, FL
+    lat: 30.400
+    lon: -81.520
+    tz: America/New_York
+    station: KJAX
+    group: Jacksonville-Savannah
+    harbors:
+      - {name: JAXPORT Blount Island, lat: 30.400, lon: -81.520}
+      - {name: JAXPORT Talleyrand, lat: 30.350, lon: -81.630}
+      - {name: Naval Station Mayport, lat: 30.390, lon: -81.410}
+      - {name: Port of Fernandina, lat: 30.680, lon: -81.470}
+      - {name: Port of Brunswick, lat: 31.130, lon: -81.500}
+
+  - id: SAV
+    name: Savannah, GA
+    lat: 32.130
+    lon: -81.140
+    tz: America/New_York
+    station: KSAV
+    group: Jacksonville-Savannah
+    harbors:
+      - {name: Garden City Terminal, lat: 32.130, lon: -81.140}
+
+  - id: CHS
+    name: Charleston, SC
+    lat: 32.830
+    lon: -79.900
+    tz: America/New_York
+    station: KCHS
+    group: Carolinas
+    harbors:
+      - {name: Wando Welch Terminal, lat: 32.830, lon: -79.900}
+      - {name: North Charleston Terminal, lat: 32.900, lon: -79.960}
+
+  - id: GT
+    name: Georgetown, SC
+    lat: 33.360
+    lon: -79.290
+    tz: America/New_York
+    station: KGGE
+    taf_station: KMYR   # KGGE issues no TAF
+    group: Carolinas
+    harbors:
+      - {name: Port of Georgetown, lat: 33.360, lon: -79.290}
+
+  - id: ILM
+    name: Wilmington, NC
+    lat: 34.200
+    lon: -77.950
+    tz: America/New_York
+    station: KILM
+    group: Carolinas
+    harbors:
+      - {name: Port of Wilmington NC, lat: 34.200, lon: -77.950}
+      - {name: Port of Morehead City, lat: 34.720, lon: -76.700}
+
+  # ---------------- Japan ----------------
+  # country: JP -> forecast from Open-Meteo (the NWS only covers the US).
+  - id: TYO
+    name: Tokyo
+    lat: 35.620
+    lon: 139.780
+    tz: Asia/Tokyo
+    country: JP
+    station: RJTT
+    group: Kanto
+    harbors:
+      - {name: Port of Tokyo (Oi Terminal), lat: 35.595, lon: 139.765}
+
+  - id: YOK
+    name: Yokohama
+    lat: 35.450
+    lon: 139.660
+    tz: Asia/Tokyo
+    country: JP
+    station: RJTT
+    group: Kanto
+    harbors:
+      - {name: Port of Yokohama (Honmoku), lat: 35.425, lon: 139.675}
+
+  - id: YKS
+    name: Yokosuka
+    lat: 35.290
+    lon: 139.670
+    tz: Asia/Tokyo
+    country: JP
+    station: RJTT
+    group: Kanto
+    harbors:
+      - {name: Fleet Activities Yokosuka, lat: 35.290, lon: 139.665}
+
+  - id: CHB
+    name: Chiba
+    lat: 35.580
+    lon: 140.090
+    tz: Asia/Tokyo
+    country: JP
+    station: RJTT
+    group: Kanto
+    harbors:
+      - {name: Port of Chiba, lat: 35.580, lon: 140.090}
+      - {name: Port of Kisarazu, lat: 35.370, lon: 139.900}
+
+  - id: KOB
+    name: Kobe
+    lat: 34.670
+    lon: 135.210
+    tz: Asia/Tokyo
+    country: JP
+    station: RJBE
+    taf_station: RJBB   # Kobe Airport issues no TAF; Kansai does
+    group: Setouchi
+    harbors:
+      - {name: Port of Kobe, lat: 34.670, lon: 135.210}
+      - {name: Port of Osaka, lat: 34.640, lon: 135.420}
+
+  - id: HIJ
+    name: Hiroshima
+    lat: 34.350
+    lon: 132.460
+    tz: Asia/Tokyo
+    country: JP
+    station: RJOA
+    group: Setouchi
+    harbors:
+      - {name: Port of Hiroshima (Ujina), lat: 34.355, lon: 132.462}
+      - {name: Miyajima, lat: 34.300, lon: 132.320}
+
+  - id: KRE
+    name: Kure
+    lat: 34.240
+    lon: 132.550
+    tz: Asia/Tokyo
+    country: JP
+    station: RJOA
+    group: Setouchi
+    harbors:
+      - {name: Kure (JMSDF base & shipyards), lat: 34.236, lon: 132.555}
+
+  - id: NGS
+    name: Nagasaki
+    lat: 32.740
+    lon: 129.870
+    tz: Asia/Tokyo
+    country: JP
+    station: RJFU
+    group: Kyushu
+    harbors:
+      - {name: Port of Nagasaki, lat: 32.740, lon: 129.870}
+
+  - id: SBO
+    name: Sasebo
+    lat: 33.160
+    lon: 129.720
+    tz: Asia/Tokyo
+    country: JP
+    station: RJFU
+    group: Kyushu
+    harbors:
+      - {name: Fleet Activities Sasebo, lat: 33.163, lon: 129.715}
+
+  - id: KAG
+    name: Kagoshima
+    lat: 31.590
+    lon: 130.560
+    tz: Asia/Tokyo
+    country: JP
+    station: RJFK
+    group: Kyushu
+    harbors:
+      - {name: Port of Kagoshima, lat: 31.590, lon: 130.565}
+      - {name: Port of Shibushi, lat: 31.470, lon: 131.110}
+
+  - id: MYN
+    name: Miyanoura (Yakushima)
+    lat: 30.420
+    lon: 130.570
+    tz: Asia/Tokyo
+    country: JP
+    station: RJFG   # Yakushima airport (RJFC) issues no METAR; Tanegashima is ~40 km away
+    group: Kyushu
+    harbors:
+      - {name: Miyanoura Port, lat: 30.420, lon: 130.570}
+      - {name: Nishinoomote (Tanegashima), lat: 30.730, lon: 130.995}
+
+  - id: AKJ
+    name: Akita
+    lat: 39.750
+    lon: 140.060
+    tz: Asia/Tokyo
+    country: JP
+    station: RJSK
+    group: Tohoku-Hokkaido
+    harbors:
+      - {name: Port of Akita, lat: 39.755, lon: 140.065}
+
+  - id: HKD
+    name: Hakodate
+    lat: 41.780
+    lon: 140.720
+    tz: Asia/Tokyo
+    country: JP
+    station: RJCH
+    group: Tohoku-Hokkaido
+    harbors:
+      - {name: Port of Hakodate, lat: 41.780, lon: 140.720}
+      - {name: Port of Aomori, lat: 40.830, lon: 140.740}
+
+  - id: WKJ
+    name: Wakkanai
+    lat: 45.410
+    lon: 141.680
+    tz: Asia/Tokyo
+    country: JP
+    station: RJCW
+    group: Wakkanai
+    harbors:
+      - {name: Port of Wakkanai, lat: 45.410, lon: 141.680}
+      - {name: Korsakov (Sakhalin, Russia), lat: 46.630, lon: 142.780}
+
+  - id: NAH
+    name: Naha Port (Okinawa)
+    lat: 26.220
+    lon: 127.670
+    tz: Asia/Tokyo
+    country: JP
+    station: ROAH
+    group: Okinawa
+    harbors:
+      - {name: Naha Port, lat: 26.220, lon: 127.670}
+
+  - id: WBC
+    name: White Beach (Okinawa)
+    lat: 26.300
+    lon: 127.910
+    tz: Asia/Tokyo
+    country: JP
+    station: ROAH
+    group: Okinawa
+    harbors:
+      - {name: White Beach Naval Facility, lat: 26.300, lon: 127.910}
