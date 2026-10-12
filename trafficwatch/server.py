@@ -206,11 +206,14 @@ async def live(port_id: str):
     now = time.time()
     t_view = now - s.delay_s
     last = services.opensky.last_poll.get(p.group) or 0
+    # No-key snapshots are already old by nature; show the whole snapshot at once (the banner gives its time).
+    ac_view = now if s.anonymous else t_view
     return {
-        "server_now": now, "t_view": t_view, "delay": s.delay_s,
+        # No-key mode has no live feed to delay, so its clock shows plain local time.
+        "server_now": now, "t_view": t_view, "delay": 0 if s.anonymous else s.delay_s,
         "mode": {"anonymous": s.anonymous, "ships": s.ships, "snapshot_ts": last or None,
                  "interval_s": s.lite_interval_s if s.anonymous else None},
-        "aircraft": aircraft_items(p, t_view),
+        "aircraft": aircraft_items(p, ac_view),
         "vessels": vessel_items(p, t_view) if s.ships else [],
         "status": {
             "opensky": {**services.opensky.status(), "group_age": _r(now - last) if last else None},

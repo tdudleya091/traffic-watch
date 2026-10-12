@@ -6,6 +6,7 @@
 #  4. adds "Traffic Watch" to your app menu
 set -euo pipefail
 DIR="$(cd "$(dirname "$0")" && pwd)"
+cd "$DIR"   # so the app's own package imports work wherever the script is started from
 PY="${TW_SYSTEM_PYTHON:-/usr/bin/python3}"   # the system Python: the GTK bindings are compiled for it
 
 say() { printf '\033[1m%s\033[0m\n' "$*"; }

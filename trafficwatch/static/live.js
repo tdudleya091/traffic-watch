@@ -312,7 +312,8 @@
       elUtc.textContent = `(${fmtUtc.format(t)} UTC)`;
       let zone = fmtZone.formatToParts(t).find((p) => p.type === "timeZoneName")?.value || "";
       if (zone.startsWith("GMT") && port.tz_abbr) zone = port.tz_abbr;   // e.g. "GMT+9" -> "JST"
-      elSub.textContent = `${port.name} · ${zone} · map ${Math.round(delayMs / 1000)} s behind live`;
+      elSub.textContent = delayMs ? `${port.name} · ${zone} · map ${Math.round(delayMs / 1000)} s behind live`
+        : `${port.name} · ${zone}`;
     }
     tick();
     setInterval(tick, 1000);
@@ -342,7 +343,7 @@
         const moving = d.vessels.filter((v) => (v.sog ?? 0) >= 0.5).length;
         elCounts.innerHTML = `<span>✈ <b>${d.aircraft.length}</b> aircraft</span>` + (d.mode.ships
           ? `<span>⚓ <b>${d.vessels.length}</b> vessels <span class="tw-muted">(${moving} moving)</span></span>`
-          : `<span class="tw-muted">⚓ Ships need a free <a href="/setup">AISStream key</a></span>`);
+          : `<span class="tw-muted" title="Live ships need a free AISStream key">⚓ Ships off · <a href="/setup">add key</a></span>`);
         renderMode(d.mode);
         renderStatus(d.status);
         dash.onLive(d);
