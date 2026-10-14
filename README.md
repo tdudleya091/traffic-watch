@@ -111,7 +111,8 @@ Ports outside the US need `country:` so forecasts come from Open-Meteo.
   building while the window is closed; the window attaches to it.
 - Pie charts for altitude, airline share (now current, top 8 airlines),
   manufacturer, ships by type and flag registries.
-- History database: separate aircraft/ship tables, WAL mode.
+- History database: separate aircraft/ship tables, WAL mode. These are all done to ensure that you can track the numbers over 7 days consistently instead of patchily with previous versions. 
+<img width="1919" height="1042" alt="image" src="https://github.com/user-attachments/assets/a1b64881-b72b-4eac-9769-e09e9993587a" />
 
 **1.0.2**
 - Dashboard above the legend: Aircraft (aircraft over time, altitude,
