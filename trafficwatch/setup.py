@@ -9,6 +9,10 @@ from __future__ import annotations
 import asyncio
 import json
 import os
+import shutil
+import subprocess
+import sys
+import threading
 from pathlib import Path
 
 import httpx
@@ -17,7 +21,7 @@ from fastapi import APIRouter, Request
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
-from .config import CONFIG_HOME, KEY_NAMES, KEYS_FILE, MODE_FILE, load_mode, load_settings
+from .config import CONFIG_HOME, KEY_NAMES, KEYS_FILE, ROOT, load_settings, save_mode
 from .opensky import TOKEN_URL
 
 router = APIRouter()
@@ -134,10 +138,92 @@ async def setup_save(req: SaveRequest, request: Request):
             return {"ok": False, "message": "Enter the AISStream API key, or choose Skip."}
     _write_private(KEYS_FILE, "# Written by Traffic Watch setup. Keep private.\n"
                    + "".join(f"{k}={_quote(v)}\n" for k, v in keys.items()))
-    mode = load_mode()
-    mode.update(configured=True, lite_interval_min=min(max(int(req.interval_min), 15), 120))
-    _write_private(MODE_FILE, json.dumps(mode))
+    save_mode({"configured": True, "lite_interval_min": min(max(int(req.interval_min), 15), 120)})
     services = getattr(request.app.state, "services", None)
     if services is not None:
         await services.restart()
     return {"ok": True, "message": "Saved. Traffic Watch is now using these settings."}
+
+
+# ---------------------------------------------------------------- background collector
+# A systemd *user* service that runs `app.py --headless`, so history keeps recording while the
+# window is closed. The window attaches to it when it is running (see app.py).
+UNIT_NAME = "traffic-watch-collector.service"
+UNIT_DIR = Path(os.environ.get("XDG_CONFIG_HOME") or Path.home() / ".config") / "systemd" / "user"
+UNIT_FILE = UNIT_DIR / UNIT_NAME
+
+
+def _systemctl(*args: str) -> subprocess.CompletedProcess:
+    return subprocess.run(["systemctl", "--user", *args], capture_output=True, text=True, timeout=30)
+
+
+def collector_status() -> dict:
+    if not shutil.which("systemctl"):
+        return {"available": False, "enabled": False, "active": False}
+    try:
+        enabled = UNIT_FILE.exists() and _systemctl("is-enabled", UNIT_NAME).stdout.strip() == "enabled"
+        active = _systemctl("is-active", UNIT_NAME).stdout.strip() in ("active", "activating")
+        return {"available": True, "enabled": enabled, "active": active}
+    except (OSError, subprocess.SubprocessError):
+        return {"available": False, "enabled": False, "active": False}
+
+
+def _unit_text() -> str:
+    # Carry test/second-install overrides (port, data folder, config folder) into the service.
+    env = "".join(f"Environment={k}={os.environ[k]}\n" for k in
+                  ("TRAFFIC_WATCH_PORT", "TRAFFIC_WATCH_STATE", "TRAFFIC_WATCH_CONFIG") if os.environ.get(k))
+    return (
+        "[Unit]\n"
+        "Description=Traffic Watch background collector (records traffic history)\n"
+        "After=network-online.target\n\n"
+        "[Service]\n"
+        f"WorkingDirectory={ROOT}\n"
+        f'ExecStart="{sys.executable}" "{ROOT / "app.py"}" --headless\n'   # quoted: install paths may contain spaces
+        f"{env}"
+        # Exits at once if the app window's own server holds the port; retry until it is free.
+        "Restart=on-failure\n"
+        "RestartSec=30\n\n"
+        "[Install]\n"
+        "WantedBy=default.target\n"
+    )
+
+
+class CollectorRequest(BaseModel):
+    enabled: bool
+
+
+@router.get("/api/collector")
+def collector_get():
+    return collector_status()
+
+
+@router.post("/api/collector")
+async def collector_set(req: CollectorRequest, request: Request):
+    from .server import HEADLESS   # whether this very request is being served by the collector
+
+    if not shutil.which("systemctl"):
+        return {"ok": False, "message": "systemd is not available on this system.", **collector_status()}
+    if req.enabled:
+        UNIT_DIR.mkdir(parents=True, exist_ok=True)
+        UNIT_FILE.write_text(_unit_text())
+        r = await asyncio.to_thread(lambda: (_systemctl("daemon-reload"), _systemctl("enable", "--now", UNIT_NAME))[1])
+        if r.returncode != 0:
+            return {"ok": False, "message": f"Could not enable the collector: {r.stderr.strip()[:200]}",
+                    **collector_status()}
+        return {"ok": True, "message": "Background recording is on. It keeps running after you close this window.",
+                **collector_status()}
+
+    def disable() -> None:
+        # Stop last: when the collector serves this request, stopping kills this very process.
+        _systemctl("disable", UNIT_NAME)
+        UNIT_FILE.unlink(missing_ok=True)
+        _systemctl("daemon-reload")
+        _systemctl("stop", UNIT_NAME)
+
+    if HEADLESS:
+        # This page is served by the collector itself: answer first, then stop it.
+        threading.Timer(1.0, disable).start()
+        return {"ok": True, "restart": True, "enabled": False, "available": True, "active": False,
+                "message": "Background recording is off. Close and reopen Traffic Watch to keep using the map."}
+    await asyncio.to_thread(disable)
+    return {"ok": True, "message": "Background recording is off.", **collector_status()}

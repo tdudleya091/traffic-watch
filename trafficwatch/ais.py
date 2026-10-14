@@ -22,6 +22,7 @@ class AISClient:
         self.store = store
         self.settings = settings
         self.connected = False
+        self.connected_since: float | None = None   # start of the current connection (history warm-up)
         self.msg_count = 0
         self.last_msg = 0.0
         self.last_error: str | None = None
@@ -42,13 +43,14 @@ class AISClient:
                 async with websockets.connect(URL, ping_interval=20, max_size=2**22) as ws:
                     await ws.send(self._subscription())
                     self.connected, self.last_error, backoff = True, None, 2
+                    self.connected_since = time.time()
                     async for raw in ws:
                         self._handle(raw)
             except asyncio.CancelledError:
                 raise
             except Exception as e:  # network drops, server closes, bad key
                 self.last_error = f"{e.__class__.__name__}: {e}"[:160]
-            self.connected = False
+            self.connected, self.connected_since = False, None
             await asyncio.sleep(backoff)
             backoff = min(backoff * 2, 60)
 

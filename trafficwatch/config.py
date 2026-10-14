@@ -14,7 +14,10 @@ ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / "data"
 REF_DIR = DATA / "ref"
 MAPS_DIR = DATA / "maps"
-STATE_DIR = DATA / "state"
+# Runtime state (history, OpenSky usage). Overridable so tests or a second install don't share it.
+STATE_DIR = Path(os.environ["TRAFFIC_WATCH_STATE"]) if os.environ.get("TRAFFIC_WATCH_STATE") else DATA / "state"
+# Port of the background collector; the app window looks for a running collector here.
+COLLECTOR_PORT = int(os.environ.get("TRAFFIC_WATCH_PORT") or 8765)
 CONFIG_FILE = ROOT / "config" / "ports.yaml"
 
 # Per-user settings live outside the app folder, so keys never sit next to code that gets shared.
@@ -138,6 +141,16 @@ def load_mode() -> dict:
         return json.loads(MODE_FILE.read_text())
     except (OSError, ValueError):
         return {}
+
+
+def save_mode(updates: dict) -> None:
+    """Merge into ~/.config/traffic-watch/mode.json (private to the user)."""
+    mode = load_mode()
+    mode.update(updates)
+    CONFIG_HOME.mkdir(parents=True, exist_ok=True, mode=0o700)
+    fd = os.open(MODE_FILE, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    with os.fdopen(fd, "w") as f:
+        f.write(json.dumps(mode))
 
 
 def load_settings() -> Settings:

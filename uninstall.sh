@@ -4,6 +4,14 @@
 set -euo pipefail
 CONFIG="${TRAFFIC_WATCH_CONFIG:-${XDG_CONFIG_HOME:-$HOME/.config}/traffic-watch}"
 
+UNIT="${XDG_CONFIG_HOME:-$HOME/.config}/systemd/user/traffic-watch-collector.service"
+if [ -f "$UNIT" ]; then
+  systemctl --user disable --now traffic-watch-collector.service 2>/dev/null || true
+  rm -f "$UNIT"
+  systemctl --user daemon-reload 2>/dev/null || true
+  echo "Stopped and removed the background collector."
+fi
+
 rm -f "$HOME/.local/share/applications/traffic-watch.desktop" \
       "$HOME/.local/share/icons/hicolor/scalable/apps/traffic-watch.svg"
 update-desktop-database "$HOME/.local/share/applications" 2>/dev/null || true

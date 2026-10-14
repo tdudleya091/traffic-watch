@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import asyncio
+import os
 import time
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -13,11 +14,11 @@ from fastapi.staticfiles import StaticFiles
 from . import VERSION
 from .ais import AISClient
 from .basemap import ensure_maps
-from .config import MAPS_DIR, Port, load_ports, load_settings
+from .config import MAPS_DIR, Port, load_mode, load_ports, load_settings, save_mode
 from .enrich import aircraft_info, refresh_reference, vessel_info
-from .history import SAMPLE_EVERY, History, summarize_aircraft, summarize_vessels
+from .history import AIS_WARMUP_S, SAMPLE_EVERY, History
 from .opensky import OpenSkyPoller
-from .setup import router as setup_router
+from .setup import collector_status, router as setup_router
 from .store import TrackStore
 from .weather import WeatherService
 
@@ -26,6 +27,7 @@ MPS_TO_KT = 1.943844
 
 ports, groups = load_ports()
 history = History()
+HEADLESS = os.environ.get("TW_HEADLESS") == "1"   # set by `app.py --headless` (the background collector)
 
 
 class Services:
@@ -45,8 +47,11 @@ class Services:
             self.aircraft = TrackStore(keep_s=600, max_age_s=300, max_extrap_s=180)
         self.vessels = TrackStore(keep_s=1800, max_age_s=900, max_extrap_s=600)
         self.opensky = OpenSkyPoller(groups, self.aircraft, s)
-        if s.anonymous:
-            self.opensky.on_poll = self._sample_group
+        self.opensky.on_poll = self._sample_group
+        # With no window open (collector), keep polling the port you last looked at.
+        last = load_mode().get("last_port")
+        if last in ports:
+            self.opensky.active_group = ports[last].group
         self.ais = AISClient(groups, self.vessels, s)
         self.weather = WeatherService(ports, groups, s.weather_every)
 
@@ -66,7 +71,7 @@ class Services:
         active = self.opensky.active_group
         await self.stop()
         self._build()
-        self.opensky.active_group = active
+        self.opensky.active_group = active or self.opensky.active_group
         self.start()
 
     async def _prune(self) -> None:
@@ -78,25 +83,29 @@ class Services:
 
     # ---- dashboard history ----
     async def _sampler(self) -> None:
-        """Every 10 min: ships for every port; aircraft for ports whose area was polled in that window.
-        The first sample comes 2 min after start (past the 90 s display delay) so charts fill quickly."""
-        await asyncio.sleep(120)
+        """Ship counts every 10 min, once the AIS feed has been connected for 15 min
+        (before that the picture is still filling in and would show false dips)."""
+        last = 0.0
         while True:
+            await asyncio.sleep(30)
             now = time.time()
+            since = self.ais.connected_since
+            if not self.settings.ships or since is None or now - since < AIS_WARMUP_S or now - last < SAMPLE_EVERY:
+                continue
             for p in ports.values():
-                fresh = not self.settings.anonymous and now - self.opensky.last_poll.get(p.group, 0) <= SAMPLE_EVERY
-                ac = summarize_aircraft(aircraft_items(p, now)) if fresh else None
-                vs = summarize_vessels(vessel_items(p, now)) if self.settings.ships else None
-                history.record(p.id, now, ac, vs)
+                snap = self.vessels.snapshot(now, p.bbox)
+                moving = sum(1 for *_, meta in snap if (meta.get("sog") or 0) >= 0.5)
+                history.record_vessels(p.id, now, len(snap), moving)
             history.commit()
-            await asyncio.sleep(SAMPLE_EVERY)
+            last = now
 
     def _sample_group(self, group_id: str) -> None:
-        """No-key mode: one aircraft sample per port right after each (hourly) snapshot."""
+        """Right after an area is polled its aircraft count is exact, so record it then
+        (at most once per port per 10 min)."""
         now = time.time()
         for p in ports.values():
             if p.group == group_id:
-                history.record(p.id, now, summarize_aircraft(aircraft_items(p, now)), None)
+                history.record_aircraft(p.id, now, len(self.aircraft.snapshot(now, p.bbox)))
         history.commit()
 
 
@@ -141,14 +150,15 @@ def favicon():
 
 @app.get("/api/health")
 def health():
-    return {"ok": True}
+    return {"ok": True, "app": "traffic-watch", "version": VERSION, "headless": HEADLESS}
 
 
 @app.get("/api/config")
 def config():
     s = services.settings
     return {"version": VERSION, "configured": s.configured, "anonymous": s.anonymous, "ships": s.ships,
-            "interval_s": s.lite_interval_s if s.anonymous else None}
+            "interval_s": s.lite_interval_s if s.anonymous else None,
+            "collector": {"serving": HEADLESS, **collector_status()}}
 
 
 @app.get("/api/ports")
@@ -160,6 +170,8 @@ def list_ports():
 def port_page(port_id: str):
     p = _port(port_id)
     services.opensky.active_group = p.group
+    if load_mode().get("last_port") != p.id:
+        save_mode({"last_port": p.id})
     return FileResponse(MAPS_DIR / f"{p.id}.html", headers={"Cache-Control": "no-store"})
 
 
@@ -226,7 +238,7 @@ async def live(port_id: str):
 @app.get("/api/history/{port_id}")
 async def port_history(port_id: str, hours: float = 24):
     p = _port(port_id)
-    return {"port": p.id, "hours": hours, "samples": history.query(p.id, min(max(hours, 1), 168))}
+    return {"port": p.id, "hours": hours, **history.query(p.id, min(max(hours, 1), 168))}
 
 
 @app.get("/api/wx/{port_id}")

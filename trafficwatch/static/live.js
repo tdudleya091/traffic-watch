@@ -386,9 +386,14 @@
       }
     }
 
+    // Whether this page is served by the background collector (it keeps recording after the window closes).
+    let collectorServing = false;
+    fetch("/api/config").then((r) => r.json()).then((c) => { collectorServing = !!(c.collector && c.collector.serving); });
+
     function renderStatus(s) {
       const os = s.opensky, ais = s.ais, wx = s.wx;
       const parts = [];
+      if (collectorServing) parts.push("Background collector: on");
       if (os.anonymous) {
         const next = os.group_age == null ? null : Math.max(0, Math.round((os.interval_s - os.group_age) / 60));
         parts.push(`OpenSky (no key): ${os.group_age == null ? "waiting for first snapshot" : `next update in ${next} min`}` +

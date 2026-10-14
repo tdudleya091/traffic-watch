@@ -99,6 +99,17 @@
       <span><b>Skip</b><span class="hint">The map shows aircraft and weather only.</span></span></label>
   </section>
 
+  <section class="card" aria-labelledby="col-h" id="col-card">
+    <h2 id="col-h">Background recording</h2>
+    <p class="sub">The dashboard's over-time charts only have data for times Traffic Watch was running.</p>
+    <label class="choice"><input type="checkbox" id="col-on">
+      <span><b>Keep recording history when the window is closed</b><span class="hint">Runs a small background
+        service (systemd user service) that records traffic every 10 minutes; the map window connects to it when
+        you open it. It keeps using your OpenSky allowance and keeps the ship feed open around the clock.
+        Takes effect right away; if this window's own server is running it starts as soon as you close the window.</span></span></label>
+    <div class="row"><span class="result" id="col-result" role="status"></span></div>
+  </section>
+
   <div class="row">
     <button type="button" class="primary" id="save">Save and open the map</button>
     <span class="result" id="save-result" role="status"></span>
@@ -163,6 +174,39 @@
       $("save").disabled = false;
     }
   };
+
+  // Background collector: applies immediately (independent of Save).
+  const colOn = $("col-on"), colOut = $("col-result");
+  function showCollector(c) {
+    colOn.checked = !!c.enabled;
+    if (!c.available) {
+      colOn.disabled = true;
+      colOut.className = "result";
+      colOut.textContent = "Not available: this system has no systemd user session.";
+    } else if (c.enabled) {
+      colOut.className = "result ok";
+      colOut.textContent = c.active ? "On and recording." : "On; starts when this window's server stops.";
+    } else {
+      colOut.className = "result";
+      colOut.textContent = "Off.";
+    }
+  }
+  fetch("/api/collector").then((r) => r.json()).then(showCollector);
+  colOn.addEventListener("change", async () => {
+    colOn.disabled = true;
+    colOut.className = "result";
+    colOut.textContent = colOn.checked ? "Turning on…" : "Turning off…";
+    try {
+      const d = await post("/api/collector", { enabled: colOn.checked });
+      if (d.restart) { colOut.className = "result ok"; colOut.textContent = d.message; colOn.checked = false; return; }
+      showCollector(d);
+      if (!d.ok) show(colOut, false, d.message);
+    } catch (e) {
+      show(colOut, false, "Could not change it: " + e.message);
+    } finally {
+      colOn.disabled = false;
+    }
+  });
 
   fetch("/api/setup/state").then((r) => r.json()).then((s) => {
     state = s;

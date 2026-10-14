@@ -12,8 +12,9 @@ dashboard of traffic over time.
   ADS-B Exchange, VesselFinder and MarineTraffic.
 - Local time (24 h) with UTC, current conditions and the day's forecast.
 - Toggleable layers: aircraft, ships, weather stations and pilot reports, radar.
-- Dashboard: aircraft by altitude, manufacturer and airline share over time;
-  ships by type, moving ships over time and flag registries.
+- Dashboard: pie charts of aircraft by altitude, airline share (top 8 airlines)
+  and manufacturer, and of ships by type and flag registry; plus aircraft in
+  the area and moving ships over time (6 h / 24 h / 7 d).
 - Ports: US West Coast, Alaska, Hawaii, Gulf Coast, Southeast Atlantic,
   Northeast and Mid-Atlantic, Great Lakes, and Japan.
 
@@ -61,7 +62,12 @@ only). Change them any time with the ⚙ button on the map.
 - With keys, the port on screen refreshes every ~40 s; other ports refresh in
   the background as OpenSky's free daily allowance permits.
 - Ship operators are guessed from ship names and are labelled "(inferred)".
-- The dashboard history starts when you first run the app and keeps 7 days.
+- The over-time charts keep 7 days, recorded while Traffic Watch runs. To keep
+  recording with the window closed, turn on **Background recording** on the ⚙
+  setup page: it runs a small systemd user service (`traffic-watch-collector`)
+  that the map window connects to when you open it. It keeps using your OpenSky
+  allowance and the ship feed around the clock; turn it off on the same page.
+  Gaps in the lines are times nothing was recording.
 
 ## For developers
 
@@ -79,7 +85,8 @@ Keys can also go in a `.env` file in the app folder (see `.env.example`).
 | Weather (METAR/TAF/PIREP, NWS, Open-Meteo) | `trafficwatch/weather.py` |
 | Aircraft/ship details | `trafficwatch/enrich.py` |
 | 90 s delay + dead reckoning | `trafficwatch/store.py` |
-| Dashboard history | `trafficwatch/history.py` |
+| Dashboard history (SQLite) | `trafficwatch/history.py` |
+| Background collector | `app.py --headless`, `trafficwatch/setup.py` |
 | First-run key setup | `trafficwatch/setup.py`, `trafficwatch/static/setup.html` |
 | Base maps (folium) | `trafficwatch/basemap.py` |
 | Live layers, legend, popups | `trafficwatch/static/live.js` |
@@ -94,6 +101,17 @@ combined box under 25 sq deg (1 OpenSky credit per poll); the app warns if not.
 Ports outside the US need `country:` so forecasts come from Open-Meteo.
 
 ## Changelog
+
+**1.0.3**
+- Over-time charts fixed: aircraft are recorded right when an area is polled
+  (no more false zeros), ship counts only once the ship feed has warmed up
+  (no more dips after each launch), and lines break where nothing was recording.
+  Existing history is migrated and its bad points removed.
+- Optional background recording (systemd user service) so history keeps
+  building while the window is closed; the window attaches to it.
+- Pie charts for altitude, airline share (now current, top 8 airlines),
+  manufacturer, ships by type and flag registries.
+- History database: separate aircraft/ship tables, WAL mode.
 
 **1.0.2**
 - Dashboard above the legend: Aircraft (aircraft over time, altitude,
